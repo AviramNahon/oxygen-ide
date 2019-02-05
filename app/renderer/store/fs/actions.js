@@ -6,9 +6,18 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+/* eslint-disable */
 import * as TYPES from './types';
 import dispatchAsync from '../../helpers/dispatchAsync';
 import { success, failure } from '../../helpers/redux';
+
+/* Add file */
+export const addFile = (file) => {
+    return {
+      type: TYPES.FS_ADD_FILE,
+      payload: { file },
+  };
+}
 
 /* fetchFolderContent */
 export const fetchFolderContent = (path) => {

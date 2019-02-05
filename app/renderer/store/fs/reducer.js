@@ -6,6 +6,7 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+/* eslint-disable */
 // import uniqid from 'uniqid';
 import { message } from 'antd';
 import * as ActionTypes from './types';
@@ -13,6 +14,7 @@ import subjects from './subjects';
 import * as treeHelpers from '../../helpers/tree';
 import * as fsHelpers from '../../helpers/fs';
 import { success, failure } from '../../helpers/redux';
+import fileFolderSorter from '../../../main/helpers/fileFolderSorter';
 
 const defaultState = {
   isLoading: false,
@@ -27,10 +29,20 @@ const defaultState = {
 
 export default (state = defaultState, action, dispatch) => {
   const payload = action.payload || {};
-  const { path, node, name, response, content, error } = payload;
+  const { path, node, name, response, content, error, file } = payload;
   let _newActiveNode, _filesClone, _node, _treeDataClone;
 
   switch (action.type) {
+    case ActionTypes.FS_ADD_FILE:
+      _filesClone = {};
+      _filesClone[file.parentPath] = state.files[file.parentPath];
+      _filesClone[file.parentPath].children.push(file);
+      _filesClone[file.parentPath].children = _filesClone[file.parentPath].children.sort(fileFolderSorter);
+      return { 
+        ...state,
+        files: _filesClone
+      };
+
     // FS_TREE_OPEN_FOLDER
     case ActionTypes.FS_TREE_OPEN_FOLDER:
       return { 

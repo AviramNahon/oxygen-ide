@@ -29,15 +29,15 @@ const defaultState = {
 
 export default (state = defaultState, action, dispatch) => {
   const payload = action.payload || {};
-  const { path, node, name, response, content, error, file } = payload;
+  const { path, node, name, response, content, error, fileOrFolder } = payload;
   let _newActiveNode, _filesClone, _node, _treeDataClone;
 
   switch (action.type) {
-    case ActionTypes.FS_ADD_FILE:
+    case ActionTypes.FS_ADD_FILE_OR_FOLDER:
       _filesClone = {};
-      _filesClone[file.parentPath] = state.files[file.parentPath];
-      _filesClone[file.parentPath].children.push(file);
-      _filesClone[file.parentPath].children = _filesClone[file.parentPath].children.sort(fileFolderSorter);
+      _filesClone[fileOrFolder.parentPath] = state.files[fileOrFolder.parentPath];
+      _filesClone[fileOrFolder.parentPath].children.push(fileOrFolder);
+      _filesClone[fileOrFolder.parentPath].children = _filesClone[fileOrFolder.parentPath].children.sort(fileFolderSorter);
       return { 
         ...state,
         files: _filesClone

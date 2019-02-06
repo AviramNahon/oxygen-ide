@@ -12,10 +12,10 @@ import dispatchAsync from '../../helpers/dispatchAsync';
 import { success, failure } from '../../helpers/redux';
 
 /* Add file */
-export const addFile = (file) => {
+export const addFileOrFolder = (fileOrFolder) => {
     return {
-      type: TYPES.FS_ADD_FILE,
-      payload: { file },
+      type: TYPES.FS_ADD_FILE_OR_FOLDER,
+      payload: { fileOrFolder },
   };
 }
 

@@ -12,7 +12,7 @@ export const FS_CREATE_FILE = 'FS_CREATE_FILE';
 export const FS_SAVE_FILE = 'FS_SAVE_FILE';
 export const FS_SAVE_FILE_AS = 'FS_SAVE_FILE_AS';
 export const FS_DELETE = 'FS_DELETE';
-export const FS_ADD_FILE = 'FS_ADD_FILE';
+export const FS_ADD_FILE_OR_FOLDER = 'FS_ADD_FILE_OR_FOLDER';
 
 export const FS_TREE_OPEN_FOLDER = 'FS_TREE_OPEN_FOLDER';
 export const FS_TREE_OPEN_FOLDER_SUCCESS = 'FS_TREE_OPEN_FOLDER_SUCCESS';

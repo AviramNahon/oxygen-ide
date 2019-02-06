@@ -54,10 +54,10 @@ const processChange = (eventPath, folderPath, type) => {
         const fileLocation = filePart[1];
         const pathToFile = fileLocation.split('/');
         if (pathToFile && pathToFile.length === 2) {
-            if (type === 'fileUnlink') {
+            if (['dirUnlink', 'fileUnlink'].includes(type)) {
                 send({
                     service: 'FileService',
-                    event: 'fileWatcher',
+                    event: 'filesWatcher',
                     type,
                     data: eventPath
                 });
@@ -65,7 +65,7 @@ const processChange = (eventPath, folderPath, type) => {
                 const fileInfo = getFileInfo(eventPath);
                 send({
                     service: 'FileService',
-                    event: 'fileWatcher',
+                    event: 'filesWatcher',
                     type,
                     data: fileInfo
                 });
@@ -94,12 +94,15 @@ export default class FileService extends ServiceBase {
                 // file add
                 processChange(eventPath, folderPath, 'fileAdd');
             } else if (event === 'unlink') {
-                // [file] unlink(part of rename or delete
+                // file unlink(part of rename or delete)
                 processChange(eventPath, folderPath, 'fileUnlink');
             } else if (event === 'addDir') {
-                console.log('[dir] add', eventPath);
+                // dir add
+                processChange(eventPath, folderPath, 'dirAdd');
             } else if (event === 'unlinkDir') {
+                // dir unlink(part of rename or delete)
                 console.log('[dir] unlink (part of rename or delete)', eventPath);
+                processChange(eventPath, folderPath, 'dirUnlink');
             } else {
                 console.log('event', event);
                 console.log('eventPath', eventPath);
@@ -154,7 +157,7 @@ export default class FileService extends ServiceBase {
     }
 
     getFileContent(filePath) {
-        var data = fs.readFileSync(filePath, 'utf8');
+        const data = fs.readFileSync(filePath, 'utf8');
         return data;
     }
 

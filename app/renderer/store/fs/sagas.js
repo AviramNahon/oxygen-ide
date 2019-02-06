@@ -39,24 +39,29 @@ export default function* root() {
 }
 
 export function* handleServiceEvents({ payload }) {
-    const {service, event, type, data} = payload;
+    const {
+        service,
+        event,
+        type,
+        data
+    } = payload;
     if (!event) {
         return;
     }
 
-    if (service === 'FileService' && event === 'fileWatcher') {
-        if (type === 'fileAdd') {
-            yield addFile(data);
+    if (service === 'FileService' && event === 'filesWatcher') {
+        if (['dirAdd', 'fileAdd'].includes(type)) {
+            yield addFileOrFolder(data);
         }
-        if (type === 'fileUnlink') {
+        if (['dirUnlink', 'fileUnlink'].includes(type)) {
             yield unlinkFile(data);
         }
     }
 }
 
-function* addFile(file) {
-    if (file) {
-        yield put(fsActions.addFile(file));
+function* addFileOrFolder(fileOrFolder) {
+    if (fileOrFolder) {
+        yield put(fsActions.addFileOrFolder(fileOrFolder));
     }
 }
 

@@ -59,7 +59,7 @@ const processChange = (eventPath, folderPath, type) => {
                     service: 'FileService',
                     event: 'filesWatcher',
                     type,
-                    data: eventPath
+                    path: eventPath
                 });
             } else {
                 const fileInfo = getFileInfo(eventPath);
@@ -71,8 +71,30 @@ const processChange = (eventPath, folderPath, type) => {
                 });
             }
         } else {
-            //  file in the deep folders structure
-            console.log('deep file', fileLocation);
+            if (eventPath) {
+                //  file or folder in the deep folders structure was deleted or renamed
+                //  dirUnlinkDeep or fileUnlinkDeep
+                if (['dirUnlink', 'fileUnlink'].includes(type)) {
+                    send({
+                        service: 'FileService',
+                        event: 'filesWatcher',
+                        type: `${type}Deep`,
+                        path: eventPath
+                    });
+                } else {
+                    //  file or folder in the deep folders structure was added
+                    // dirAddDeep or fileAddDeep
+                    const fileInfo = getFileInfo(eventPath);
+                    send({
+                        service: 'FileService',
+                        event: 'filesWatcher',
+                        type: `${type}Deep`,
+                        data: fileInfo
+                    });
+                }
+            } else {
+                console.warn(`bad eventPath: ${eventPath}`);
+            }
         }
     } else {
         console.warn(`bad split result wirh eventPath: ${eventPath} and folderPath: ${folderPath}`);
@@ -80,34 +102,39 @@ const processChange = (eventPath, folderPath, type) => {
 };
 
 export default class FileService extends ServiceBase {
+    watcherOn = false;
+
     createWatchOnFilesChannel(folderPath) {
-        chokidar.watch(folderPath, {
-            ignored: ['**/node_modules/**/*', '**/node_modules/**/**/*', '**/.git/**/*'],
-            ignoreInitial: true,
-            ignorePermissionErrors: true,
-            followSymlinks: true,
-            interval: 1000,
-            binaryInterval: 1000,
-            useFsEvents: false
-        }).on('all', (event, eventPath) => {
-            if (event === 'add') {
-                // file add
-                processChange(eventPath, folderPath, 'fileAdd');
-            } else if (event === 'unlink') {
-                // file unlink(part of rename or delete)
-                processChange(eventPath, folderPath, 'fileUnlink');
-            } else if (event === 'addDir') {
-                // dir add
-                processChange(eventPath, folderPath, 'dirAdd');
-            } else if (event === 'unlinkDir') {
-                // dir unlink(part of rename or delete)
-                console.log('[dir] unlink (part of rename or delete)', eventPath);
-                processChange(eventPath, folderPath, 'dirUnlink');
-            } else {
-                console.log('event', event);
-                console.log('eventPath', eventPath);
-            }
-        });
+        if (!this.watcherOn) {
+            this.watcherOn = true;
+            chokidar.watch(folderPath, {
+                ignored: ['**/node_modules/**/*', '**/node_modules/**/**/*', '**/.git/**/*', '*.gz'],
+                ignoreInitial: true,
+                ignorePermissionErrors: true,
+                followSymlinks: true,
+                interval: 1000,
+                binaryInterval: 1000,
+                useFsEvents: false
+            }).on('all', (event, eventPath) => {
+                if (event === 'add') {
+                    // file add
+                    processChange(eventPath, folderPath, 'fileAdd');
+                } else if (event === 'unlink') {
+                    // file unlink(part of rename or delete)
+                    processChange(eventPath, folderPath, 'fileUnlink');
+                } else if (event === 'addDir') {
+                    // dir add
+                    processChange(eventPath, folderPath, 'dirAdd');
+                } else if (event === 'unlinkDir') {
+                    // dir unlink(part of rename or delete)
+                    console.log('[dir] unlink (part of rename or delete)', eventPath);
+                    processChange(eventPath, folderPath, 'dirUnlink');
+                } else {
+                    // console.log('event', event);
+                    // console.log('eventPath', eventPath);
+                }
+            });
+        }
     }
 
     getFolderContent(folderPath) {

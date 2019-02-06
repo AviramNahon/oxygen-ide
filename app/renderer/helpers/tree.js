@@ -7,7 +7,7 @@
  * (at your option) any later version.
  */
 import path from 'path';
-import { merge } from 'rxjs';
+import fileFolderSorter from '../../main/helpers/fileFolderSorter';
 
 export function wrap(rawNodes) {
     if (!rawNodes || typeof rawNodes !== 'array') {
@@ -61,22 +61,56 @@ export function findTreeNode(root, nodePath) {
     return null;
 }
 
+export function addTreeNode(root, fsInfo) {
+    if (!root || !root.length) {
+        return null;
+    }
+    const { parentPath } = fsInfo;
+    // make sure that node path ends with '/' (path separator)
+    const safeNodePath = parentPath.endsWith(path.sep) ? parentPath : parentPath + path.sep;
+    const newRoot = [];
+    root.forEach(elm => {
+        const elmPath = elm.path.endsWith(path.sep) ? elm.path : elm.path + path.sep;
+        if (safeNodePath.startsWith(elmPath)) {
+            if (elmPath === safeNodePath) {
+                let childrenClone = [];
+                if (elm.children && elm.children.length) {
+                    childrenClone = [...elm.children];
+                }
+                childrenClone.push(fsInfo);
+                childrenClone.sort(fileFolderSorter);
+                newRoot.push({
+                    ...elm,
+                    children: childrenClone
+                });
+            } else {
+                newRoot.push({
+                    ...elm,
+                    children: elm.children ? addTreeNode(elm.children, fsInfo) : null,
+                });
+            }
+        } else {
+            newRoot.push(elm);
+        }
+    });
+    return newRoot;
+}
+
 export function removeTreeNode(root, nodePath) {
     if (!root || !root.length) {
         return null;
     }
     // make sure that node path ends with '/' (path separator)
-    nodePath = nodePath.endsWith(path.sep) ? nodePath : nodePath + path.sep;
-    let newRoot = [];
+    const safeNodePath = nodePath.endsWith(path.sep) ? nodePath : nodePath + path.sep;
+    const newRoot = [];
     root.forEach(elm => {
         const elmPath = elm.path.endsWith(path.sep) ? elm.path : elm.path + path.sep;
-        if (nodePath !== elmPath && nodePath.startsWith(elmPath)) {
+        if (safeNodePath !== elmPath && safeNodePath.startsWith(elmPath)) {
             newRoot.push({
                 ...elm,
-                children: elm.children ? removeTreeNode(elm.children, nodePath) : null,
+                children: elm.children ? removeTreeNode(elm.children, safeNodePath) : null,
             });
-        }
-        else if (nodePath !== elmPath) {
+        } else if (safeNodePath !== elmPath) {
             newRoot.push(elm);
         }
     });
@@ -92,21 +126,18 @@ export function updateTree(root, updatedNode, oldPath = null) {
     let nodePath = oldPath ? oldPath : updatedNode.path;
     // make sure that node path ends with '/' (path separator)
     nodePath = nodePath.endsWith(path.sep) ? nodePath : nodePath + path.sep;
-    //return root;
-    let retval = root.map(elm => {
+    //  return root;
+    const retval = root.map(elm => {
         const elmPath = elm.path.endsWith(path.sep) ? elm.path : elm.path + path.sep;
         if (nodePath === elmPath) {
             return { ...updatedNode };
-        }
-        else if (nodePath.startsWith(elmPath)) {
+        } else if (nodePath.startsWith(elmPath)) {
             return {
                 ...elm,
                 children: elm.children ? updateTree(elm.children, updatedNode, oldPath) : null,
             };
-        } 
-        else {
-            return elm;
         }
+        return elm;
     });
     return retval;
 }

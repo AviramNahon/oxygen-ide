@@ -11,11 +11,18 @@ import * as TYPES from './types';
 import dispatchAsync from '../../helpers/dispatchAsync';
 import { success, failure } from '../../helpers/redux';
 
-/* Add file */
+/* Add file or folder */
 export const addFileOrFolder = (fileOrFolder) => {
     return {
       type: TYPES.FS_ADD_FILE_OR_FOLDER,
       payload: { fileOrFolder },
+  };
+}
+
+export const addFileOrFolderDeep = (fileOrFolder) => {
+  return {
+    type: TYPES.FS_ADD_FILE_OR_FOLDER_DEEP,
+    payload: { fileOrFolder },
   };
 }
 

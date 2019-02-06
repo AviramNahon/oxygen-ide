@@ -43,7 +43,8 @@ export function* handleServiceEvents({ payload }) {
         service,
         event,
         type,
-        data
+        data,
+        path
     } = payload;
     if (!event) {
         return;
@@ -53,9 +54,18 @@ export function* handleServiceEvents({ payload }) {
         if (['dirAdd', 'fileAdd'].includes(type)) {
             yield addFileOrFolder(data);
         }
-        if (['dirUnlink', 'fileUnlink'].includes(type)) {
-            yield unlinkFile(data);
+        if (['dirUnlink', 'fileUnlink', 'dirUnlinkDeep', 'fileUnlinkDeep'].includes(type)) {
+            yield unlinkFile(path);
         }
+        if (['dirAddDeep', 'fileAddDeep'].includes(type)) {
+            yield addFileOrFolderDeep(data);
+        }
+    }
+}
+
+function* addFileOrFolderDeep(fileOrFolder) {
+    if (fileOrFolder) {
+        yield put(fsActions.addFileOrFolderDeep(fileOrFolder));
     }
 }
 
@@ -102,12 +112,12 @@ export function* treeOpenFolder({ payload }) {
 }
 
 export function* watchOnFiles(path) {
-    yield call(services.mainIpc.call, 'FileService', 'createWatchOnFilesChannel', [ path ]);
+    yield call(services.mainIpc.call, 'FileService', 'createWatchOnFilesChannel', [path]);
 }
 
 export function* _fetchFolderContent(path) {
     try {
-        let folder = yield call(services.mainIpc.call, 'FileService', 'getFolderContent', [ path ]);
+        let folder = yield call(services.mainIpc.call, 'FileService', 'getFolderContent', [path]);
         if (folder && path) {
             yield watchOnFiles(path);
         }

@@ -15,6 +15,7 @@ import * as treeHelpers from '../../helpers/tree';
 import * as fsHelpers from '../../helpers/fs';
 import { success, failure } from '../../helpers/redux';
 import fileFolderSorter from '../../../main/helpers/fileFolderSorter';
+import _ from 'lodash';
 
 const defaultState = {
   isLoading: false,
@@ -34,14 +35,36 @@ export default (state = defaultState, action, dispatch) => {
 
   switch (action.type) {
     case ActionTypes.FS_ADD_FILE_OR_FOLDER:
-      _filesClone = {};
-      _filesClone[fileOrFolder.parentPath] = state.files[fileOrFolder.parentPath];
-      _filesClone[fileOrFolder.parentPath].children.push(fileOrFolder);
-      _filesClone[fileOrFolder.parentPath].children = _filesClone[fileOrFolder.parentPath].children.sort(fileFolderSorter);
+      let filesClone = {};
+      filesClone[fileOrFolder.parentPath] = state.files[fileOrFolder.parentPath];
+      if (
+        filesClone[fileOrFolder.parentPath] &&
+        filesClone[fileOrFolder.parentPath].children &&
+        filesClone[fileOrFolder.parentPath].children.length
+      ) {
+          filesClone[fileOrFolder.parentPath].children.push(fileOrFolder);
+      } else {
+        filesClone[fileOrFolder.parentPath].children = [fileOrFolder];
+      }
+    
+      filesClone[fileOrFolder.parentPath].children = _.uniq(filesClone[fileOrFolder.parentPath].children.sort(fileFolderSorter));
       return { 
         ...state,
-        files: _filesClone
+        files: filesClone,
+        tree: {
+          ...state.tree,
+          data: filesClone[fileOrFolder.parentPath].children
+        }
       };
+
+    case ActionTypes.FS_ADD_FILE_OR_FOLDER_DEEP: {
+      return { 
+        ...state, 
+        tree: {
+          data: treeHelpers.addTreeNode(state.tree.data, fileOrFolder),
+        }
+      };
+    }
 
     // FS_TREE_OPEN_FOLDER
     case ActionTypes.FS_TREE_OPEN_FOLDER:
@@ -102,11 +125,11 @@ export default (state = defaultState, action, dispatch) => {
       };
     case success(ActionTypes.FS_DELETE):
       _newActiveNode = state.tree.activeNode === path ? null : state.tree.activeNode;
-      _filesClone = {};
+      let filesClons = {};
       // clone all files except the one we just renamed
       for (let filePath of Object.keys(state.files)) {
         if (path !== filePath) {
-          _filesClone[filePath] = state.files[filePath];
+          filesClons[filePath] = state.files[filePath];
         }
       }
       return { 
@@ -115,7 +138,7 @@ export default (state = defaultState, action, dispatch) => {
           activeNode: _newActiveNode,
           data: treeHelpers.removeTreeNode(state.tree.data, path),
         },
-        files: _filesClone,
+        files: filesClons,
         isLoading: false,
       };
     case failure(ActionTypes.FS_DELETE):
